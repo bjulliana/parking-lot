@@ -3,6 +3,7 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Ticket;
 
 class ParkingSpace extends Model
 {
@@ -13,7 +14,7 @@ class ParkingSpace extends Model
 
     public function tickets()
     {
-        return $this->hasMany('Ticket');
+        return $this->hasMany('App\Ticket');
     }
 
 }

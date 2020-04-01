@@ -13,7 +13,9 @@ class CreateTicketTable extends Migration {
 			$table->string('number');
 			$table->integer('space_id')->unsigned();
 			$table->float('cost')->nullable();
+			$table->string('total_time')->nullable();
 			$table->boolean('paid')->default(false);
+            $table->timestamp('end_time')->nullable();
 		});
 	}
 

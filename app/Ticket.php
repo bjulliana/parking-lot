@@ -15,7 +15,7 @@ class Ticket extends Model {
     protected $fillable   = ['number', 'cost', 'total_time', 'paid', 'space_id'];
 
     public function parking_space() {
-        return $this->belongsTo('App\ParkingSpace');
+        return $this->belongsTo('App\ParkingSpace', 'space_id');
     }
 
     public function getCost($ticket) {

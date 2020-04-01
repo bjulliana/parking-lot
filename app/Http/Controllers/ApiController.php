@@ -9,8 +9,11 @@ use Illuminate\Http\Request;
 
 class ApiController extends Controller {
 
+    /**
+     * Get all tickets.
+     */
     public function getAllTickets() {
-        $tickets = Ticket::select()->get();
+        $tickets = Ticket::with('parking_space')->get();
         $time    = Carbon::now();
 
         foreach ($tickets as $ticket) {
@@ -20,6 +23,9 @@ class ApiController extends Controller {
         return response($tickets, 200);
     }
 
+    /**
+     * Get one ticket.
+     */
     public function getOneTicket($number) {
         if (Ticket::where('number', '=', $number)->exists()) {
             $time   = Carbon::now();
@@ -38,18 +44,13 @@ class ApiController extends Controller {
         }
     }
 
+    /**
+     * Save a new ticket.
+     */
     public function store(Request $request) {
-        $spaces = ParkingSpace::where('occupied', true)->get();
-        $count  = count($spaces);
+        $space = ParkingSpace::where('occupied', false)->first();
 
-        if ($count >= 10) {
-            return response()->json(
-                [
-                    "message" => "Parking Lot Full"
-                ], 404
-            );
-        } else {
-            $space           = new ParkingSpace();
+        if (isset($space)) {
             $space->occupied = true;
             $space->save();
 
@@ -63,9 +64,18 @@ class ApiController extends Controller {
                     "message" => "Your Ticket #$ticket->number is Printing"
                 ], 201
             );
+        } else {
+            return response()->json(
+                [
+                    "message" => "Parking Lot Full"
+                ], 404
+            );
         }
     }
 
+    /**
+     * Make a payment for a ticket.
+     */
     public function pay($number) {
         $request       = app('request');
         $ticket        = Ticket::where('number', '=', $number)->first();

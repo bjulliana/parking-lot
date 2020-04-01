@@ -15,7 +15,6 @@ class ApiController extends Controller {
 
         foreach ($tickets as $ticket) {
             $ticket->total_time = $ticket->created_at->diffInHours($time) . ':' . $ticket->created_at->diff($time)->format('%I');
-            $ticket->cost       = (new Ticket())->getCost($ticket);
         }
 
         return response($tickets, 200);
@@ -68,9 +67,10 @@ class ApiController extends Controller {
     }
 
     public function pay($number) {
-        $request = app('request');
-        $ticket  = Ticket::where('number', '=', $number)->first();
-        $time    = Carbon::now();
+        $request       = app('request');
+        $ticket        = Ticket::where('number', '=', $number)->first();
+        $time          = Carbon::now();
+        $parking_space = ParkingSpace::find($ticket->space_id);
 
         if (Ticket::where('number', '=', $number)->exists()) {
             $card = $request->card;
@@ -81,6 +81,9 @@ class ApiController extends Controller {
                 $ticket->cost       = (new Ticket())->getCost($ticket);
                 $ticket->end_time   = $time;
                 $ticket->save();
+
+                $parking_space->occupied = false;
+                $parking_space->save();
             } else {
                 return response()->json(
                     [
@@ -98,29 +101,5 @@ class ApiController extends Controller {
             );
         }
     }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param int $id
-     *
-     * @return Response
-     */
-    public function update($id) {
-
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param int $id
-     *
-     * @return Response
-     */
-    public function destroy($id) {
-
-    }
-
 }
 
-?>

@@ -61,7 +61,7 @@ class ApiController extends Controller {
 
             return response()->json(
                 [
-                    "message" => "Your Ticket #$ticket->number is Printing"
+                    "ticket_number" => $ticket->number
                 ], 201
             );
         } else {
@@ -85,9 +85,16 @@ class ApiController extends Controller {
         if (Ticket::where('number', '=', $number)->exists()) {
             $card = $request->card;
 
-            if ($card) {
+            $validator = validator()->make(
+                $request->all(),
+                [
+                    'card' => ['required', 'numeric']
+                ]
+            );
+
+            if ($validator->passes()) {
                 $ticket->paid       = true;
-                $ticket->total_time = $ticket->created_at->diffInHours($time) . ':' . $ticket->created_at->diff($time)->format('%I');
+                $ticket->total_time = $ticket->created_at->diffInHours($time) . ':' . $ticket->created_at->diff($time)->format(' % I');
                 $ticket->cost       = (new Ticket())->getCost($ticket);
                 $ticket->end_time   = $time;
                 $ticket->save();
@@ -97,7 +104,7 @@ class ApiController extends Controller {
             } else {
                 return response()->json(
                     [
-                        "message" => "Payment Information Missing"
+                        "message" => "Incorrect Payment Information"
                     ], 404
                 );
             }

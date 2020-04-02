@@ -80,7 +80,7 @@ class TicketsController extends Controller {
         $data      = request()->input();
         $validator = validator()->make(
             $data, [
-                     'card' => ['required'],
+                     'card' => ['required', 'numeric'],
                  ]
         );
 

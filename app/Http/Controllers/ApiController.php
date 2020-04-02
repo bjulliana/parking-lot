@@ -40,7 +40,7 @@ class ApiController extends Controller {
             $ticket->total_time = $ticket->created_at->diffInHours($time) . ':' . $ticket->created_at->diff($time)->format('%I');
             $ticket->cost       = (new Ticket())->getCost($ticket);
 
-            return response($ticket, 200);
+            return response()->json($ticket);
         } else {
             return response()->json(
                 [

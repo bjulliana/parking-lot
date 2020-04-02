@@ -11,6 +11,8 @@ class ApiController extends Controller {
 
     /**
      * Get all tickets.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function getAllTickets() {
         $tickets = Ticket::with('parking_space')->get();
@@ -20,11 +22,15 @@ class ApiController extends Controller {
             $ticket->total_time = $ticket->created_at->diffInHours($time) . ':' . $ticket->created_at->diff($time)->format('%I');
         }
 
-        return response($tickets, 200);
+        return response()->json($tickets);
     }
 
     /**
      * Get one ticket.
+     *
+     * @param $number
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function getOneTicket($number) {
         if (Ticket::where('number', '=', $number)->exists()) {
@@ -45,7 +51,26 @@ class ApiController extends Controller {
     }
 
     /**
+     * Search for a ticket.
+     *
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function search(Request $request) {
+        $str = $request->get('str');
+
+        $result = Ticket::where('number', 'like', "%$str%")->get();
+
+        return response()->json($result);
+    }
+
+    /**
      * Save a new ticket.
+     *
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request) {
         $space = ParkingSpace::where('occupied', false)->first();
@@ -59,11 +84,7 @@ class ApiController extends Controller {
             $ticket->space_id = $space->id;
             $ticket->save();
 
-            return response()->json(
-                [
-                    "ticket_number" => $ticket->number
-                ], 201
-            );
+            return response()->json($ticket);
         } else {
             return response()->json(
                 [
@@ -75,6 +96,10 @@ class ApiController extends Controller {
 
     /**
      * Make a payment for a ticket.
+     *
+     * @param $number
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function pay($number) {
         $request       = app('request');
@@ -101,6 +126,8 @@ class ApiController extends Controller {
 
                 $parking_space->occupied = false;
                 $parking_space->save();
+
+                return response()->json($ticket);
             } else {
                 return response()->json(
                     [
@@ -108,8 +135,6 @@ class ApiController extends Controller {
                     ], 404
                 );
             }
-
-            return response($ticket, 200);
         } else {
             return response()->json(
                 [

@@ -7,10 +7,12 @@ use App\ParkingSpace;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
-class TicketsController extends Controller {
+class WebController extends Controller {
 
     /**
      * Display all tickets.
+     *
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
     public function getAllTickets() {
         $tickets = Ticket::with('parking_space')->get();
@@ -20,6 +22,10 @@ class TicketsController extends Controller {
 
     /**
      * Find ticket and display owning amount.
+     *
+     * @param $number
+     *
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
     public function getOneTicket($number) {
         $ticket     = Ticket::where('number', '=', $number)->first();
@@ -32,6 +38,8 @@ class TicketsController extends Controller {
 
     /**
      * Show the form for creating a new ticket.
+     *
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
     public function create() {
         $time   = Carbon::now();
@@ -43,6 +51,10 @@ class TicketsController extends Controller {
 
     /**
      * Store a new ticket.
+     *
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function store(Request $request) {
 
@@ -69,6 +81,10 @@ class TicketsController extends Controller {
 
     /**
      * Store the payment information and clear the parking spot.
+     *
+     * @param $number
+     *
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function pay($number) {
 

@@ -1,7 +1,5 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -13,6 +11,13 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', 'TicketsController@create')->name('tickets.new');
+Route::get('/new', 'TicketsController@create')->name('tickets.new');
+Route::post('/tickets', 'TicketsController@store')->name('tickets.add');
+Route::get('/all', 'TicketsController@getAllTickets')->name('tickets.all');
+Route::get('/tickets/{number}', 'TicketsController@getOneTicket')->name('tickets.show');
+Route::post('/payments/{number}', 'TicketsController@pay')->name('tickets.pay');
+Route::post('/receipt/{number}', 'TicketsController@receipt')->name('tickets.receipt');
+
+// Route::resource('parkingspace', 'ParkingSpacesController');
+// Route::resource('ticket', 'TicketsController');

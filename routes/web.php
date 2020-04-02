@@ -11,13 +11,10 @@
 |
 */
 
-Route::get('/', 'TicketsController@create')->name('tickets.new');
-Route::get('/new', 'TicketsController@create')->name('tickets.new');
-Route::post('/tickets', 'TicketsController@store')->name('tickets.add');
-Route::get('/all', 'TicketsController@getAllTickets')->name('tickets.all');
-Route::get('/tickets/{number}', 'TicketsController@getOneTicket')->name('tickets.show');
-Route::post('/payments/{number}', 'TicketsController@pay')->name('tickets.pay');
-Route::post('/receipt/{number}', 'TicketsController@receipt')->name('tickets.receipt');
-
-// Route::resource('parkingspace', 'ParkingSpacesController');
-// Route::resource('ticket', 'TicketsController');
+Route::get('/', 'WebController@create')->name('tickets.new');
+Route::get('new', 'WebController@create')->name('tickets.new');
+Route::post('tickets', 'WebController@store')->name('tickets.add');
+Route::get('all', 'WebController@getAllTickets')->name('tickets.all');
+Route::get('tickets/{number}', 'WebController@getOneTicket')->name('tickets.show');
+Route::post('payments/{number}', 'WebController@pay')->name('tickets.pay');
+Route::post('receipt/{number}', 'WebController@receipt')->name('tickets.receipt');

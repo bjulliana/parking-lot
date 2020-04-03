@@ -17,6 +17,10 @@ Clone the repository
 Switch to the repo folder
 
     cd parking-lot
+    
+Build the image data    
+    
+    docker-compose build
 
 Start up the containers
 

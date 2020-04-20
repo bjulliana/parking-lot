@@ -2,20 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\ParkingService;
 use App\Ticket;
 use App\ParkingSpace;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use App\Services\TicketService;
 
 class WebController extends Controller {
 
     /**
      * Display all tickets.
      *
+     * @param \App\Services\TicketService $ticketService
+     *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
-    public function getAllTickets() {
-        $tickets = Ticket::with('parking_space')->get();
+    public function index(TicketService $ticketService) {
+        $tickets = $ticketService->getAllTickets();
 
         return view('tickets.all', ['tickets' => $tickets]);
     }
@@ -23,15 +27,16 @@ class WebController extends Controller {
     /**
      * Find ticket and display owning amount.
      *
-     * @param $number
+     * @param \App\Services\TicketService $ticketService
+     * @param                             $number
      *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
-    public function getOneTicket($number) {
-        $ticket     = Ticket::where('number', '=', $number)->first();
+    public function show(TicketService $ticketService, $number) {
         $time       = Carbon::now();
-        $cost       = (new Ticket())->getCost($ticket);
-        $total_time = $ticket->created_at->diffInHours($time) . ':' . $ticket->created_at->diff($time)->format('%I');
+        $ticket     = $ticketService->getOneTicket($number)->first();
+        $cost       = $ticketService->getCost($ticket);
+        $total_time = $ticketService->getTotalTime($ticket);
 
         return view('tickets.show', ['ticket' => $ticket, 'time' => $time, 'total_time' => $total_time, 'cost' => $cost]);
     }
@@ -39,11 +44,13 @@ class WebController extends Controller {
     /**
      * Show the form for creating a new ticket.
      *
+     * @param \App\Services\ParkingService $parkingService
+     *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
-    public function create() {
+    public function create(ParkingService $parkingService) {
         $time   = Carbon::now();
-        $spaces = ParkingSpace::where('occupied', false)->get();
+        $spaces = $parkingService->getEmptySpot()->get();
         $count  = count($spaces);
 
         return view('tickets.create', ['time' => $time, 'count' => $count]);
@@ -52,14 +59,14 @@ class WebController extends Controller {
     /**
      * Store a new ticket.
      *
-     * @param \Illuminate\Http\Request $request
+     * @param \App\Services\ParkingService $parkingService
      *
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function store(Request $request) {
+    public function store(ParkingService $parkingService) {
 
         //Get First Open Parking Space
-        $space = ParkingSpace::where('occupied', false)->first();
+        $space = $parkingService->getEmptySpot()->first();
 
         if (isset($space)) {
             $space->occupied = true;
@@ -82,16 +89,17 @@ class WebController extends Controller {
     /**
      * Store the payment information and clear the parking spot.
      *
-     * @param $number
+     * @param \App\Services\TicketService  $ticketService
+     * @param \App\Services\ParkingService $parkingService
+     * @param                              $number
      *
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function pay($number) {
+    public function update(TicketService $ticketService, ParkingService $parkingService, $number) {
 
         $time          = Carbon::now();
-        $ticket        = Ticket::where('number', '=', $number)->first();
-        $total_time    = $ticket->created_at->diffInHours($time) . ':' . $ticket->created_at->diff($time)->format('%I');
-        $parking_space = ParkingSpace::find($ticket->space_id);
+        $ticket        = $ticketService->getOneTicket($number)->first();
+        $parking_space = $parkingService->getSpace($ticket);
 
         $data      = request()->input();
         $validator = validator()->make(
@@ -102,8 +110,8 @@ class WebController extends Controller {
 
         if ($validator->passes()) {
             $ticket->paid       = true;
-            $ticket->total_time = $total_time;
-            $ticket->cost       = (new Ticket())->getCost($ticket);
+            $ticket->total_time = $ticketService->getTotalTime($ticket);
+            $ticket->cost       = $ticketService->getCost($ticket);
             $ticket->end_time   = $time;
             $ticket->save();
 

@@ -72,21 +72,16 @@ class ApiController extends Controller {
     /**
      * Save a new ticket.
      *
-     * @param \App\Services\ParkingService $parkingService
+     * @param \App\Services\TicketService $ticketService
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function store(ParkingService $parkingService) {
-        $space = $parkingService->getEmptySpot()->first();
+    public function store(TicketService $ticketService) {
+        //Get First Open Parking Space
+        $space = (new ParkingSpace())->getEmptySpot()->first();
 
         if (isset($space)) {
-            $space->occupied = true;
-            $space->save();
-
-            $ticket           = new Ticket();
-            $ticket->number   = uniqid();
-            $ticket->space_id = $space->id;
-            $ticket->save();
+            $ticket = $ticketService->storeTicket($space);
 
             return response()->json($ticket);
         } else {
@@ -102,18 +97,17 @@ class ApiController extends Controller {
      * Make a payment for a ticket.
      *
      * @param \App\Services\TicketService  $ticketService
-     * @param \App\Services\ParkingService $parkingService
      * @param                              $number
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function update(TicketService $ticketService, ParkingService $parkingService, $number) {
+    public function update(TicketService $ticketService, $number) {
         $request       = app('request');
         $time          = Carbon::now();
         $ticket        = $ticketService->getOneTicket($number)->first();
-        $parking_space = $parkingService->getSpace($ticket);
+        $parking_space = (new ParkingSpace())->getSpace($ticket);
 
-        if (Ticket::where('number', '=', $number)->exists()) {
+        if ($ticketService->getOneTicket($number)->exists()) {
             if ($ticket->paid == true) {
                 return response()->json(
                     [
@@ -121,6 +115,7 @@ class ApiController extends Controller {
                     ], 409
                 );
             } else {
+
                 $card = $request->card;
 
                 $validator = validator()->make(
@@ -131,14 +126,7 @@ class ApiController extends Controller {
                 );
 
                 if ($validator->passes()) {
-                    $ticket->paid       = true;
-                    $ticket->total_time = $ticketService->getTotalTime($ticket);
-                    $ticket->cost       = $ticketService->getCost($ticket);
-                    $ticket->end_time   = $time;
-                    $ticket->save();
-
-                    $parking_space->occupied = false;
-                    $parking_space->save();
+                    $ticket = $ticketService->payTicket($ticket, $parking_space);
 
                     return response()->json($ticket);
                 } else {

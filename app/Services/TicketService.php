@@ -21,6 +21,36 @@ class TicketService {
         return $ticket->created_at->diffInHours($time) . ':' . $ticket->created_at->diff($time)->format('%I');
     }
 
+    public function storeTicket($space) {
+        $space->occupied = true;
+        $space->save();
+
+        $ticket = new Ticket(
+            [
+                'number'   => uniqid(),
+                'space_id' => $space->id,
+            ]
+        );
+        $ticket->save();
+
+        return $ticket;
+    }
+
+    public function payTicket($ticket, $parking_space) {
+        $time          = Carbon::now();
+
+        $ticket->paid       = true;
+        $ticket->total_time = $this->getTotalTime($ticket);
+        $ticket->cost       = $this->getCost($ticket);
+        $ticket->end_time   = $time;
+        $ticket->save();
+
+        $parking_space->occupied = false;
+        $parking_space->save();
+
+        return $ticket;
+    }
+
     public function getCost($ticket) {
         $time           = Carbon::now();
         $total_time     = $ticket->created_at->floatDiffInHours($time);

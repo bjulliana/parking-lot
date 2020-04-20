@@ -44,13 +44,11 @@ class WebController extends Controller {
     /**
      * Show the form for creating a new ticket.
      *
-     * @param \App\Services\ParkingService $parkingService
-     *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
-    public function create(ParkingService $parkingService) {
+    public function create() {
         $time   = Carbon::now();
-        $spaces = $parkingService->getEmptySpot()->get();
+        $spaces = (new ParkingSpace())->getEmptySpot()->get();
         $count  = count($spaces);
 
         return view('tickets.create', ['time' => $time, 'count' => $count]);
@@ -59,26 +57,17 @@ class WebController extends Controller {
     /**
      * Store a new ticket.
      *
-     * @param \App\Services\ParkingService $parkingService
+     * @param \App\Services\TicketService $ticketService
      *
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function store(ParkingService $parkingService) {
+    public function store(TicketService $ticketService) {
 
         //Get First Open Parking Space
-        $space = $parkingService->getEmptySpot()->first();
+        $space = (new ParkingSpace())->getEmptySpot()->first();
 
         if (isset($space)) {
-            $space->occupied = true;
-            $space->save();
-
-            $ticket = new Ticket(
-                [
-                    'number'   => uniqid(),
-                    'space_id' => $space->id,
-                ]
-            );
-            $ticket->save();
+            $ticket = $ticketService->storeTicket($space);
 
             return back()->with('success', 'The Ticket #' . $ticket->number . ' is Printing');
         } else {
@@ -90,16 +79,13 @@ class WebController extends Controller {
      * Store the payment information and clear the parking spot.
      *
      * @param \App\Services\TicketService  $ticketService
-     * @param \App\Services\ParkingService $parkingService
      * @param                              $number
      *
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function update(TicketService $ticketService, ParkingService $parkingService, $number) {
-
-        $time          = Carbon::now();
+    public function update(TicketService $ticketService, $number) {
         $ticket        = $ticketService->getOneTicket($number)->first();
-        $parking_space = $parkingService->getSpace($ticket);
+        $parking_space = (new ParkingSpace())->getSpace($ticket);
 
         $data      = request()->input();
         $validator = validator()->make(
@@ -109,14 +95,7 @@ class WebController extends Controller {
         );
 
         if ($validator->passes()) {
-            $ticket->paid       = true;
-            $ticket->total_time = $ticketService->getTotalTime($ticket);
-            $ticket->cost       = $ticketService->getCost($ticket);
-            $ticket->end_time   = $time;
-            $ticket->save();
-
-            $parking_space->occupied = false;
-            $parking_space->save();
+            $ticket = $ticketService->payTicket($ticket, $parking_space);
 
             return back()->with('success', 'The Ticket #' . $ticket->number . ' is Paid');
         }

@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::post('tickets', 'ApiController@store');
-Route::get('all', 'ApiController@getAllTickets');
-Route::get('tickets/{number}', 'ApiController@getOneTicket');
-Route::post('payments/{number}', 'ApiController@pay');
+Route::get('all', 'ApiController@index');
+Route::get('tickets/{number}', 'ApiController@show');
+Route::post('payments/{number}', 'ApiController@update');
 Route::get('search', 'ApiController@search');
